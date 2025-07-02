@@ -6,10 +6,10 @@ I'm initially following the [Operating System in 1,000 Lines](https://operating-
 
 # Why RISC-V?
 
-I've chosen RISC-V because that's the architecture I most familiarized from the classes I've taken. After looking for resources to build the OS for this architecture I've found the above guide, which is just perfect for me.
+I've chosen RISC-V because that's the architecture I'm most familiarized from the classes I've taken. After looking for resources to build the OS for this architecture I've found the above guide, which is just perfect for me.
 
 # Why Zig?
 
 I believe Zig can be a great candidate for programming Linux in the future, given that it's easy to transition to from a C background, it has a big emphasis on compile time operations, it's easy to do unsafe operations and, finally, it has awesome multiplatform build system.
 
-I've already have had projects I've worked on with Zig, so I'm familiar with the language. But the build system is not very clear to me yet, so I'll use this opportunity to learn it as well.
+I've already had projects I've worked on with Zig, so I'm familiar with the language. But the build system is not very clear to me yet, so I'll use this opportunity to learn it as well.
