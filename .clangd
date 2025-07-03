@@ -1,0 +1,8 @@
+CompileFlags:
+  Add: [
+    "--target=riscv32",
+    "-march=rv32imac",
+    "-mabi=ilp32",
+    "-ffreestanding",
+    "-nostdlib"
+  ]
