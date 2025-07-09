@@ -1,0 +1,11 @@
+CompileFlags:
+  Add: [
+    "--target=riscv32",
+    "-march=rv32imac",
+    "-mabi=ilp32",
+    "-ffreestanding",
+    "-nostdlib",
+    -DVERSION="" # Só pra ele ficar quieto
+  ]
+Diagnostics:
+  Suppress: ["bool_redeclaration"]
