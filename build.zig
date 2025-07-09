@@ -1,28 +1,27 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{
-        .default_target = .{ .cpu_arch = .riscv32 },
+        .default_target = .{
+            .os_tag = .freestanding,
+            .cpu_arch = .riscv32,
+        },
     });
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{
+        .preferred_optimize_mode = .ReleaseFast
+    });
 
     // Primeiro compilamos o kernel
-    const kernel = b.addObject(.{
+    const kernel = b.addExecutable(.{
         .name = "kernel",
         .root_source_file = b.path("src/kernel.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    // E agora fazemos o link
-    const linked = b.addSystemCommand(&.{
-        "zig",                           "ld",
-        "-T",                            "kernel.ld",
-        kernel.step.,             "-o",
-        b.path("kernel.elf").getPath(b),
-    });
-    linked.step.dependOn(&kernel.step);
-    b.installFile("kernel.elf", "kernel");
+    kernel.setLinkerScript(b.path("kernel.ld"));
+    kernel.entry = .{ .symbol_name = "boot" };
+    b.installArtifact(kernel);
 
     const qemu_cmd = b.addSystemCommand(&.{
         "qemu-system-riscv32",            "-machine",
@@ -34,4 +33,20 @@ pub fn build(b: *std.Build) void {
     });
     const run_step = b.step("run", "Compila e Boota o QEMU");
     run_step.dependOn(&qemu_cmd.step);
+
+    const asm_cmd = b.addSystemCommand(&.{
+        "zsh",
+        "-c",
+        try std.fmt.allocPrint(b.allocator, "llvm-objdump -d --disassembler-color=on {s} | less -r", .{b.getInstallPath(.bin, "kernel")}),
+    });
+    const asm_step = b.step("asm", "Revela o assembly do kernel (para debugging)");
+    asm_step.dependOn(&asm_cmd.step);
+
+    const mem_cmd = b.addSystemCommand(&.{
+        "zsh",
+        "-c",
+        try std.fmt.allocPrint(b.allocator, "llvm-nm -n {s} | less -r", .{b.getInstallPath(.bin, "kernel")}),
+    });
+    const mem_step = b.step("mem", "Revela a memória do kernel (para debugging)");
+    mem_step.dependOn(&mem_cmd.step);
 }
