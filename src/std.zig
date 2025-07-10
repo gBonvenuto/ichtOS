@@ -1,4 +1,16 @@
 const sbi = @import("sbi.zig");
+const std = @import("std");
+
+pub inline fn assert(ok: bool) void {
+    if (!ok) {
+        unreachable;
+    }
+}
+
+// TODO: Implementar isso aqui de verdade
+pub fn PANIC(fmt: anytype) void {
+    _ = fmt;
+}
 
 pub fn memset(buf: [*]u8, c: u8, n: usize) [*]u8 {
     var i: usize = 0;
@@ -27,7 +39,6 @@ pub fn strncpy(dst: [*]u8, src: [*:0]const u8) [*:0]u8 {
 }
 
 pub fn strcmp(s1: [:0]const u8, s2: [:0]const u8) i32 {
-
     const size = undefined;
 
     if (s1.len < s2.len) {
@@ -45,8 +56,33 @@ pub fn strcmp(s1: [:0]const u8, s2: [:0]const u8) i32 {
     return 0;
 }
 
-pub fn printf(str: [:0]const u8)void {
-    for (str) |value| {
+// TODO: ver como implementar o print do Zig (para isso preciso criar um writer)
+pub fn print(comptime fmt: [:0]const u8, comptime args: anytype) void {
+    var string_final: [10000:0]u8 = undefined;
+
+    _ = std.fmt.bufPrintZ(&string_final, fmt, args) catch null; // Vamos ignorar esse erro por enquanto
+
+    for (string_final) |value| {
+        if (value == 0) {break;}
         sbi.putchar(value);
     }
+}
+
+test "Teste do std.print" {
+    print(
+        \\ Testando o Printf:
+        \\ Inteiros: 
+        \\ - Meu input: -10, -1, 1000, 123456789
+        \\ - Printf: {d}, {d}, {d}, {d}
+        \\ Hex:
+        \\ - Meu input: -0x1, 0xabcdef9
+        \\ - Printf: {x}, {x}
+        \\ String:
+        \\ - Meu input: , "Hello world!\n", "Hello World"
+        \\ Printf: {s}, {s}, {s}
+        , .{
+            -10, -1, 1000, 123456789,
+            -0x1, 0xabcdef9,
+            "", "Hello world!\n", "Hello World"
+        });
 }

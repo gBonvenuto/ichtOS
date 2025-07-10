@@ -9,7 +9,7 @@ pub fn main() void {}
 
 export fn kernel_main() void {
     _ = std.memset(__bss, 0, __bss_end - __bss);
-    std.printf(
+    std.print(
         \\ 
         \\  _      _     _    ___  ____   ___  
         \\ (_) ___| |__ | |_ / _ \/ ___| /   \/
@@ -17,7 +17,8 @@ export fn kernel_main() void {
         \\ | | (__| | | | |_| |_| |___) |          
         \\ |_|\___|_| |_|\__|\___/|____/           
         \\
-    );
+    , .{});
+
     while (true) {}
 }
 
@@ -40,3 +41,4 @@ export fn boot() linksection(".text.boot") callconv(.naked) void {
 test "testes da std" {
     zstd.testing.refAllDecls(@This());
 }
+
