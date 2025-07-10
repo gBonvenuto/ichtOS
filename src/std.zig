@@ -20,12 +20,8 @@ pub fn memset(buf: [*]u8, c: u8, n: usize) [*]u8 {
     return buf;
 }
 
-pub fn memcpy(dst: [*]u8, src: [*]const u8, n: usize) [*]u8 {
-    var i: usize = 0;
-    while (i < n) : (i += 1) {
-        dst[i] = src[i];
-    }
-    return dst;
+pub fn memcpy(dst: []u8, src: []const u8) void {
+    @memcpy(dst, src);
 }
 
 pub fn strncpy(dst: [*]u8, src: [*:0]const u8) [*:0]u8 {
@@ -57,7 +53,7 @@ pub fn strcmp(s1: [:0]const u8, s2: [:0]const u8) i32 {
 }
 
 // TODO: ver como implementar o print do Zig (para isso preciso criar um writer)
-pub fn print(comptime fmt: [:0]const u8, comptime args: anytype) void {
+pub fn print(comptime fmt: [:0]const u8, args: anytype) void {
     var string_final: [10000:0]u8 = undefined;
 
     _ = std.fmt.bufPrintZ(&string_final, fmt, args) catch null; // Vamos ignorar esse erro por enquanto
