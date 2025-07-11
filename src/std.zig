@@ -67,6 +67,21 @@ pub fn print(comptime fmt: [:0]const u8, args: anytype) void {
     }
 }
 
+pub fn delay() void  {
+    for (0..30000000) |_| {
+        asm volatile ("nop");
+    }
+    for (0..30000000) |_| {
+        asm volatile ("nop");
+    }
+    for (0..30000000) |_| {
+        asm volatile ("nop");
+    }
+    for (0..30000000) |_| {
+        asm volatile ("nop");
+    }
+}
+
 test "Teste do std.print" {
     print(
         \\ Testando o Printf:
@@ -81,3 +96,5 @@ test "Teste do std.print" {
         \\ Printf: {s}, {s}, {s}
     , .{ -10, -1, 1000, 123456789, -0x1, 0xabcdef9, "", "Hello world!\n", "Hello World" });
 }
+
+

@@ -2,7 +2,7 @@ const zstd = @import("std");
 pub const std = @import("std.zig");
 pub const sbi = @import("sbi.zig");
 const exceptions = @import("exceptions.zig");
-const builtin = zstd.builtin;
+const process = @import("process.zig");
 
 // NOTE: nota sobre Zig, por algum motivo, quando eu fazia __stack_top: [*]u8
 // ele simplesmente ignorava que eu queria um [*]u8 e transformava em um u8.
@@ -51,17 +51,42 @@ pub inline fn PANIC(message: []const u8, args: anytype, src: zstd.builtin.Source
     while (true) {}
 }
 
+var proc_a: *process.Process = undefined;
+var proc_b: *process.Process = undefined;
+
+fn proc_a_entry() void {
+    std.print("Iniciando o processo A\n", .{});
+    while (true) {
+        std.delay();
+        // const astack_u32: []u32 = @ptrCast(@alignCast(&(proc_a.stack)));
+        // const bstack_u32: []u32 = @ptrCast(@alignCast(&(proc_b.stack)));
+        std.print("a.sp.* : {x}\nb.sp: {x}\n", .{proc_a.sp[0..4], proc_b.sp[0..4]});
+        std.print("A", .{});
+        process.switch_context(@intFromPtr(&proc_a.sp),@intFromPtr(&proc_b.sp));
+    }
+}
+
+fn proc_b_entry() void {
+    std.print("Iniciando o processo B\n", .{});
+    while (true) {
+        const astack_u32: []u32 = @ptrCast(@alignCast(&(proc_a.stack)));
+        const bstack_u32: []u32 = @ptrCast(@alignCast(&(proc_b.stack)));
+        std.print("proc_a.stack : {any}\nprob_b.stack: {any}\n", .{astack_u32, bstack_u32});
+        std.print("B", .{});
+        std.delay();
+        process.switch_context(@intFromPtr(&proc_b.sp), @intFromPtr(&proc_a.sp));
+    }
+}
+
 export fn kernel_main() void {
     _ = exceptions.WRITE_CSR("stvec", kernel_entry);
 
     const bss: [*]u8 = @ptrCast(&__bss);
     _ = std.memset(bss, 0, @intFromPtr(&__bss_end) - @intFromPtr(&__bss));
     std.print("bss feito\n", .{});
-    std.print("bss = {*}, bss_end = {*}, bss_end - bss = {x}\n", .{bss, &__bss_end, @intFromPtr(&__bss_end) - @intFromPtr(&__bss)});
-    PANIC("", .{}, @src());
+    std.print("bss = {*}, bss_end = {*}, bss_end - bss = {x}\n", .{ bss, &__bss_end, @intFromPtr(&__bss_end) - @intFromPtr(&__bss) });
 
     next_paddr = @alignCast(@ptrCast(&__free_ram));
-
 
     std.print(
         \\ 
@@ -73,10 +98,11 @@ export fn kernel_main() void {
         \\
     , .{});
 
-    const paddr0 = alloc_pages(2);
-    const paddr1 = alloc_pages(1);
-    std.print("paddr0={*}\n", .{paddr0});
-    std.print("paddr1={*}\n", .{paddr1});
+    proc_a = process.create(@intFromPtr(&proc_a_entry));
+    proc_b = process.create(@intFromPtr(&proc_b_entry));
+    proc_a_entry();
+
+    // std.print("fim\n", .{});
 
     while (true) {}
 }
@@ -115,7 +141,7 @@ pub fn alloc_pages(n: usize) [*]u8 {
         PANIC("out of memory", .{}, @src());
     }
 
-    return std.memset(paddr, 0, n*PAGE_SIZE);
+    return std.memset(paddr, 0, n * PAGE_SIZE);
 }
 
 test "PANIC" {

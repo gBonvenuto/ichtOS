@@ -3,6 +3,8 @@ zig-out/
 *.o
 build/
 
+*.pdf
+
 # Recomendado pelo guia
 
 /disk/*
