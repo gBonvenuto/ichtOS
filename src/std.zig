@@ -59,7 +59,9 @@ pub fn print(comptime fmt: [:0]const u8, args: anytype) void {
     _ = std.fmt.bufPrintZ(&string_final, fmt, args) catch null; // Vamos ignorar esse erro por enquanto
 
     for (string_final) |value| {
-        if (value == 0) {break;}
+        if (value == 0) {
+            break;
+        }
         sbi.putchar(value);
     }
 }
@@ -76,9 +78,5 @@ test "Teste do std.print" {
         \\ String:
         \\ - Meu input: , "Hello world!\n", "Hello World"
         \\ Printf: {s}, {s}, {s}
-        , .{
-            -10, -1, 1000, 123456789,
-            -0x1, 0xabcdef9,
-            "", "Hello world!\n", "Hello World"
-        });
+    , .{ -10, -1, 1000, 123456789, -0x1, 0xabcdef9, "", "Hello world!\n", "Hello World" });
 }

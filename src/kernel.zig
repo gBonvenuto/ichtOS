@@ -7,6 +7,11 @@ const builtin = zstd.builtin;
 extern var __stack_top: [*]u8;
 extern var __bss: [*]u8;
 extern var __bss_end: [*]u8;
+extern var __free_ram: [*]u8;
+extern var __free_ram_end: [*]u8;
+
+// Isso foi uma tentativa de fazer um stack trace, talvez eu revise isso no
+// futuro, vou manter esse código aqui pra eu me lembrar depois
 extern var __debug_info_start: [*]u8;
 extern var __debug_info_end: [*]u8;
 extern var __debug_abbrev_start: [*]u8;
@@ -18,17 +23,19 @@ extern var __debug_line_end: [*]u8;
 extern var __debug_ranges_start: [*]u8;
 extern var __debug_ranges_end: [*]u8;
 
+const PAGE_SIZE = 4096;
+var next_paddr: *[*]u8 = undefined;
+
 extern fn kernel_entry() void;
 
 // TODO: tentar integrar com o @panic() do Zig no futuro
 pub inline fn PANIC(message: []const u8, args: anytype, src: zstd.builtin.SourceLocation) noreturn {
-    _ = src;
     std.print(
         \\
         \\--------------
         \\PANIC: {s}:{s} ({d}:{d})
         \\
-    , .{ @src().file, @src().fn_name, @src().line, @src().column });
+    , .{ src.file, src.fn_name, src.line, src.column });
     std.print(message ++
         \\
         \\--------------
@@ -40,10 +47,11 @@ pub inline fn PANIC(message: []const u8, args: anytype, src: zstd.builtin.Source
 }
 
 export fn kernel_main() void {
-    _ = std.memset(__bss, 0, __bss_end - __bss);
-
     _ = exceptions.WRITE_CSR("stvec", kernel_entry);
-    asm volatile ("unimp");
+    const bss: [*]u8 = @ptrCast(&__bss);
+    _ = std.memset(bss, 0, @intFromPtr(&__bss_end) - @intFromPtr(&__bss));
+    next_paddr = &__free_ram;
+
 
     std.print(
         \\ 
@@ -55,6 +63,10 @@ export fn kernel_main() void {
         \\
     , .{});
 
+    const paddr0 = alloc_pages(2);
+    const paddr1 = alloc_pages(1);
+    std.print("paddr0={*}\n", .{paddr0});
+    std.print("paddr1={*}\n", .{paddr1});
 
     while (true) {}
 }
@@ -76,12 +88,24 @@ export fn boot() linksection(".text.boot") callconv(.naked) void {
 }
 
 export fn handle_trap(frame: *exceptions.trap_frame) void {
-    _ = frame;
     const scause: usize = @bitCast(exceptions.READ_CSR("scause"));
     const stval: usize = @bitCast(exceptions.READ_CSR("stval"));
     const user_pc: usize = @bitCast(exceptions.READ_CSR("sepc"));
 
-    PANIC("Trap inesperada: scause={X}, stval={X}, sepc={X}", .{ scause, stval, user_pc }, @src());
+    PANIC("Trap inesperada: scause={X}, stval={X}, sepc={X}\n{any}", .{ scause, stval, user_pc, frame }, @src());
+}
+
+pub fn alloc_pages(n: usize) [*]u8 {
+    const paddr: [*]u8 = @ptrCast(next_paddr);
+
+    const np = @intFromPtr(next_paddr) + (n * PAGE_SIZE);
+    next_paddr = @ptrFromInt(np);
+
+    if (@intFromPtr(&next_paddr) > @intFromPtr(&__free_ram_end)) {
+        PANIC("out of memory", .{}, @src());
+    }
+
+    return std.memset(paddr, 0, n*PAGE_SIZE);
 }
 
 test "PANIC" {
@@ -91,3 +115,10 @@ test "PANIC" {
 test "testes da std" {
     zstd.testing.refAllDecls(@This());
 }
+
+// test "Teste de alocação de Páginas" {
+//     const paddr0 = alloc_pages(2);
+//     const paddr1 = alloc_pages(1);
+//     std.print("paddr0={*}\n", .{paddr0});
+//     std.print("paddr1={*}\n", .{paddr1});
+// }
