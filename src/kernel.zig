@@ -4,24 +4,29 @@ pub const sbi = @import("sbi.zig");
 const exceptions = @import("exceptions.zig");
 const builtin = zstd.builtin;
 
-extern var __stack_top: [*]u8;
-extern var __bss: [*]u8;
-extern var __bss_end: [*]u8;
-extern var __free_ram: [*]u8;
-extern var __free_ram_end: [*]u8;
+// NOTE: nota sobre Zig, por algum motivo, quando eu fazia __stack_top: [*]u8
+// ele simplesmente ignorava que eu queria um [*]u8 e transformava em um u8.
+// Por isso eu precisava usar "&" direto, então, pra deixar mais claro, vou
+// declará-los como u8 direto.
+// Eu fazia da outra forma porque em C seria: extern uint8_t *__stack_top.
+extern var __stack_top: u8;
+extern var __bss: u8;
+extern var __bss_end: u8;
+extern var __free_ram: u8;
+extern var __free_ram_end: u8;
 
 // Isso foi uma tentativa de fazer um stack trace, talvez eu revise isso no
 // futuro, vou manter esse código aqui pra eu me lembrar depois
-extern var __debug_info_start: [*]u8;
-extern var __debug_info_end: [*]u8;
-extern var __debug_abbrev_start: [*]u8;
-extern var __debug_abbrev_end: [*]u8;
-extern var __debug_str_start: [*]u8;
-extern var __debug_str_end: [*]u8;
-extern var __debug_line_start: [*]u8;
-extern var __debug_line_end: [*]u8;
-extern var __debug_ranges_start: [*]u8;
-extern var __debug_ranges_end: [*]u8;
+extern var __debug_info_start: u8;
+extern var __debug_info_end: u8;
+extern var __debug_abbrev_start: u8;
+extern var __debug_abbrev_end: u8;
+extern var __debug_str_start: u8;
+extern var __debug_str_end: u8;
+extern var __debug_line_start: u8;
+extern var __debug_line_end: u8;
+extern var __debug_ranges_start: u8;
+extern var __debug_ranges_end: u8;
 
 const PAGE_SIZE = 4096;
 var next_paddr: *[*]u8 = undefined;
@@ -48,9 +53,14 @@ pub inline fn PANIC(message: []const u8, args: anytype, src: zstd.builtin.Source
 
 export fn kernel_main() void {
     _ = exceptions.WRITE_CSR("stvec", kernel_entry);
+
     const bss: [*]u8 = @ptrCast(&__bss);
     _ = std.memset(bss, 0, @intFromPtr(&__bss_end) - @intFromPtr(&__bss));
-    next_paddr = &__free_ram;
+    std.print("bss feito\n", .{});
+    std.print("bss = {*}, bss_end = {*}, bss_end - bss = {x}\n", .{bss, &__bss_end, @intFromPtr(&__bss_end) - @intFromPtr(&__bss)});
+    PANIC("", .{}, @src());
+
+    next_paddr = @alignCast(@ptrCast(&__free_ram));
 
 
     std.print(
