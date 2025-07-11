@@ -25,6 +25,7 @@ pub fn build(b: *std.Build) !void {
 
     kernel.setLinkerScript(b.path("kernel.ld"));
     kernel.entry = .{ .symbol_name = "boot" };
+    kernel.addAssemblyFile(b.path("src/kernel_entry.s"));
     const install_kernel = b.addInstallArtifact(kernel, .{});
     b.getInstallStep().dependOn(&install_kernel.step);
 
