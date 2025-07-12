@@ -15,7 +15,7 @@ pub fn PANIC(fmt: anytype) void {
 pub fn memset(buf: [*]u8, c: u8, n: usize) [*]u8 {
     var i: usize = 0;
     while (i < n) : (i += 1) {
-        print("setando o endereço {*}\n", .{&(buf[i])});
+        // print("setando o endereço {*}\n", .{&(buf[i])});
         buf[i] = c;
     }
     return buf;

@@ -5,7 +5,8 @@
 # Assume que a troca de contexto ocorre por meio de um yield()
 # que já guardou os caller-saved registers
 switch_context:
-    addi sp, sp, -13*4
+
+    addi sp, sp, -14*4
     sw ra, 0 * 4(sp)
     sw s0, 1 * 4(sp)
     sw s1, 2 * 4(sp)
@@ -19,11 +20,12 @@ switch_context:
     sw s9, 10 * 4(sp)
     sw s10, 11 * 4(sp)
     sw s11, 12 * 4(sp)
+    sw a0, 13 * 4(sp)
 
 # agora trocamos o stack pointer
 
-    sw sp, (a0)
-    lw sp, (a1)
+    mv a0, sp
+    mv sp, a1
 
     lw ra, 0 * 4(sp)
     lw s0, 1 * 4(sp)
@@ -38,7 +40,8 @@ switch_context:
     lw s9, 10 * 4(sp)
     lw s10, 11 * 4(sp)
     lw s11, 12 * 4(sp)
+    lw a0, 13 * 4(sp)
 
-    addi sp, sp, 13*4
+    addi sp, sp, 14*4
 
     ret

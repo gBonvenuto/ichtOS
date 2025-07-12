@@ -58,21 +58,19 @@ fn proc_a_entry() void {
     std.print("Iniciando o processo A\n", .{});
     while (true) {
         std.delay();
-        // const astack_u32: []u32 = @ptrCast(@alignCast(&(proc_a.stack)));
-        // const bstack_u32: []u32 = @ptrCast(@alignCast(&(proc_b.stack)));
-        std.print("a.sp.* : {x}\nb.sp: {x}\n", .{proc_a.sp[0..4], proc_b.sp[0..4]});
-        std.print("A", .{});
-        process.switch_context(@intFromPtr(&proc_a.sp),@intFromPtr(&proc_b.sp));
+        std.print("A\n", .{});
+        std.print("proc_a.sp = {*}\n", .{&proc_a.sp});
+        std.print("proc_b.sp = {*}\n", .{&proc_b.sp});
+        process.switch_context(@intFromPtr(&proc_a.sp), @intFromPtr(&proc_b.sp)); 
     }
 }
 
 fn proc_b_entry() void {
     std.print("Iniciando o processo B\n", .{});
+    std.print("proc_a.sp = {x}\n", .{&proc_a});
+    std.print("proc_b.sp = {*}\n", .{&proc_b});
     while (true) {
-        const astack_u32: []u32 = @ptrCast(@alignCast(&(proc_a.stack)));
-        const bstack_u32: []u32 = @ptrCast(@alignCast(&(proc_b.stack)));
-        std.print("proc_a.stack : {any}\nprob_b.stack: {any}\n", .{astack_u32, bstack_u32});
-        std.print("B", .{});
+        std.print("B\n", .{});
         std.delay();
         process.switch_context(@intFromPtr(&proc_b.sp), @intFromPtr(&proc_a.sp));
     }
@@ -100,6 +98,8 @@ export fn kernel_main() void {
 
     proc_a = process.create(@intFromPtr(&proc_a_entry));
     proc_b = process.create(@intFromPtr(&proc_b_entry));
+    std.print("proc_a.sp = {*}\n", .{&proc_a.sp});
+    std.print("proc_b.sp = {*}\n", .{&proc_b.sp});
     proc_a_entry();
 
     // std.print("fim\n", .{});
@@ -128,7 +128,7 @@ export fn handle_trap(frame: *exceptions.trap_frame) void {
     const stval: usize = @bitCast(exceptions.READ_CSR("stval"));
     const user_pc: usize = @bitCast(exceptions.READ_CSR("sepc"));
 
-    PANIC("Trap inesperada: scause={X}, stval={X}, sepc={X}\n{any}", .{ scause, stval, user_pc, frame }, @src());
+    PANIC("Trap inesperada: scause={X}, stval={X}, sepc={X}\n{}", .{ scause, stval, user_pc, frame }, @src());
 }
 
 pub fn alloc_pages(n: usize) [*]u8 {
