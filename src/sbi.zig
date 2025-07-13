@@ -37,6 +37,6 @@ pub inline fn sbi_call(
     };
 }
 
-pub fn putchar(ch: u8) void{
+pub export fn putchar(ch: u8) void{
     _ = sbi_call(ch, 0, 0, 0, 0, 0, 0, 1);
 }

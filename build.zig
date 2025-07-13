@@ -5,14 +5,14 @@ pub fn build(b: *std.Build) !void {
         .default_target = .{
             .os_tag = .freestanding,
             .cpu_arch = .riscv32,
-            .abi = .gnuilp32,
+            .abi = .ilp32,
             // .os_tag = .linux,
             // .cpu_arch = .x86_64,
             // .abi = .none,
         },
     });
     const optimize = b.standardOptimizeOption(.{ 
-        .preferred_optimize_mode = .Debug
+        .preferred_optimize_mode = .ReleaseFast
     });
 
     // Primeiro compilamos o kernel
