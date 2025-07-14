@@ -33,6 +33,31 @@ var next_paddr: *[*]u8 = undefined;
 
 extern fn kernel_entry() void;
 
+pub fn panic(
+    msg: []const u8,
+    trace: ?*zstd.builtin.StackTrace,
+    ret_addr: ?usize,
+) noreturn {
+    _ = trace;
+    _ = ret_addr;
+    std.print(
+        \\
+        \\--------------
+        \\PANIC:
+        \\
+        , .{});
+    for (msg) |c| {
+        sbi.putchar(c);
+    }
+    std.print(
+        \\
+        \\--------------
+        \\ 
+    , .{});
+    while (true) {}
+    unreachable;
+}
+
 // TODO: tentar integrar com o @panic() do Zig no futuro
 pub inline fn PANIC(message: []const u8, args: anytype, src: zstd.builtin.SourceLocation) noreturn {
     std.print(
@@ -51,36 +76,37 @@ pub inline fn PANIC(message: []const u8, args: anytype, src: zstd.builtin.Source
     while (true) {}
 }
 
-export var proc_a: *volatile process.Process = undefined;
-export var proc_b: *volatile process.Process = undefined;
-export var teste: usize =  123;
+pub export var proc_a: *volatile process.Process = undefined;
+pub export var proc_b: *volatile process.Process = undefined;
+pub export var teste: usize = 10;
 
-fn proc_a_entry() void {
+pub fn proc_a_entry() void {
     std.print("Iniciando o processo A\n", .{});
     while (true) {
         std.delay();
         std.print("A\n", .{});
-        std.print("&proc_a: {*},  proc_a.sp: {x} \n", .{ &proc_a, proc_a.sp });
-        std.print("&proc_b: {*},  proc_b.sp: {x} \n", .{ &proc_b, proc_b.sp });
-        const sp = asm volatile ("nop": [sp] "={sp}" (->usize));
-        std.print("sp do kernel: .{x}\n", .{sp});
-        proc_a.sp = process.switch_context(proc_a.sp, proc_b.sp);
-        std.print("proc_a.sp = {x} | ", .{proc_a.sp});
-        std.print("proc_b.sp = {x}\n", .{proc_b.sp});
+        // std.print("&proc_a: {*},  proc_a.sp: {x} \n", .{ &proc_a, proc_a.sp });
+        // std.print("&proc_b: {*},  proc_b.sp: {x} \n", .{ &proc_b, proc_b.sp });
+        // const gp = asm volatile ("nop": [gp] "={gp}" (->usize));
+        // std.print("gp do kernel: .{x}\n", .{gp});
+        // proc_a.sp = process.switch_context(proc_a.*.sp, proc_b.*.sp);
+        process.yield();
+        // std.print("proc_a.sp = {x} | ", .{proc_a.sp});
+        // std.print("proc_b.sp = {x}\n", .{proc_b.sp});
         // process.switch_context(@intFromPtr(&proc_a)+0xc, @intFromPtr(&proc_b.sp)+0xc);
     }
 }
 
-fn proc_b_entry() void {
+pub fn proc_b_entry() void {
     std.print("Iniciando o processo B\n", .{});
     while (true) {
         std.delay();
         std.print("B\n", .{});
-        std.print("&proc_b: {*}, &proc_b.sp: {x} \n", .{ &proc_b, &proc_b.sp });
-        teste += 1;
-        std.print("teste = {x}", .{teste});
+        // std.print("{x}\n", .{teste});
+        // std.print("&proc_b: {*},  proc_b.sp: {x} \n", .{ &proc_b, proc_b.sp });
         // std.print("&proc_a: {*}, &proc_a.sp: {} \n", .{ &proc_a, @typeName(@typeInfo(proc_a)) });
-        proc_b.sp = process.switch_context(proc_b.sp, proc_a.sp);
+        process.yield();
+        // proc_b.sp = process.switch_context(proc_b.sp, proc_a.sp);
     }
 }
 
@@ -104,11 +130,18 @@ export fn kernel_main() void {
         \\
     , .{});
 
+    process.init();
+
+
     proc_a = process.create(@intFromPtr(&proc_a_entry));
     proc_b = process.create(@intFromPtr(&proc_b_entry));
     std.print("proc_a = {*}\n", .{proc_a});
     std.print("proc_b = {*}\n", .{proc_b});
-    proc_a_entry();
+    std.print("sizeof(procs) = 0x{x}\n",.{@sizeOf(process.Process)}); 
+
+    process.yield();
+
+    PANIC("Voltou para o idle process (isso nunca deve acontecer!)", .{}, @src());
 
     // std.print("fim\n", .{});
 
@@ -122,6 +155,12 @@ comptime {
 export fn boot() linksection(".text.boot") callconv(.naked) void {
     @setRuntimeSafety(false);
     asm volatile (
+        // NOTE: chatgpt mandou eu fazer isso pra resolver o problema
+        // de todas as variáveis globais ficarem undefined. Não funcionou,
+        // mas vou deixar isso aqui caso eu precise no futuro
+        \\ .option nopic
+        \\ la gp, __global_pointer$
+
         \\ mv sp, %[stack_top]
         \\ j kernel_main
         :

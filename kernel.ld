@@ -37,6 +37,7 @@ SECTIONS {
     }
 
     .data : ALIGN(4) {
+        __global_pointer$ = . + 0x800;
         *(.data .data.*);
     }
 

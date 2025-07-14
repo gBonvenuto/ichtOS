@@ -7,11 +7,6 @@ pub inline fn assert(ok: bool) void {
     }
 }
 
-// TODO: Implementar isso aqui de verdade
-pub fn PANIC(fmt: anytype) void {
-    _ = fmt;
-}
-
 pub fn memset(buf: [*]u8, c: u8, n: usize) [*]u8 {
     var i: usize = 0;
     while (i < n) : (i += 1) {
@@ -66,6 +61,7 @@ pub fn print(comptime fmt: [:0]const u8, args: anytype) void {
         sbi.putchar(value);
     }
 }
+
 
 pub fn delay() void  {
     for (0..30000000) |_| {

@@ -11,9 +11,7 @@ pub fn build(b: *std.Build) !void {
             // .abi = .none,
         },
     });
-    const optimize = b.standardOptimizeOption(.{ 
-        .preferred_optimize_mode = .ReleaseFast
-    });
+    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
     // Primeiro compilamos o kernel
     const kernel = b.addExecutable(.{
@@ -41,6 +39,18 @@ pub fn build(b: *std.Build) !void {
     qemu_cmd.step.dependOn(&install_kernel.step);
     const run_step = b.step("run", "Compila e Boota o QEMU");
     run_step.dependOn(&qemu_cmd.step);
+
+    const qemu_stopped_cmd = b.addSystemCommand(&.{
+        "qemu-system-riscv32",            "-s",        "-S",          "-machine",
+        "virt",                           "-bios",     "default",     "-nographic",
+        "-serial",                        "mon:stdio", "--no-reboot", "-kernel",
+        b.getInstallPath(.bin, "kernel"),
+    });
+    qemu_stopped_cmd.step.dependOn(&install_kernel.step);
+    const debug_step = b.step("debug", "Compila e Boota o QEMU parado para ser conectado ao gdb");
+    const gdb_tutorial = b.addSystemCommand(&.{"echo", "abra o gdb com o kernel e digite `target remote :1234`"});
+    debug_step.dependOn(&gdb_tutorial.step);
+    debug_step.dependOn(&qemu_stopped_cmd.step);
 
     const asm_cmd = b.addSystemCommand(&.{
         "zsh",
