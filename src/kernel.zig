@@ -81,10 +81,12 @@ pub export var proc_b: *volatile process.Process = undefined;
 pub export var teste: usize = 10;
 
 pub fn proc_a_entry() void {
-    std.print("Iniciando o processo A\n", .{});
+    // std.print("Iniciando o processo A\n", .{});
     while (true) {
         std.delay();
-        std.print("A\n", .{});
+        sbi.putchar('A');
+        sbi.putchar('\n');
+        // std.print("A\n", .{});
         // std.print("&proc_a: {*},  proc_a.sp: {x} \n", .{ &proc_a, proc_a.sp });
         // std.print("&proc_b: {*},  proc_b.sp: {x} \n", .{ &proc_b, proc_b.sp });
         // const gp = asm volatile ("nop": [gp] "={gp}" (->usize));
@@ -98,10 +100,12 @@ pub fn proc_a_entry() void {
 }
 
 pub fn proc_b_entry() void {
-    std.print("Iniciando o processo B\n", .{});
+    // std.print("Iniciando o processo B\n", .{});
     while (true) {
         std.delay();
-        std.print("B\n", .{});
+        // std.print("B\n", .{});
+        sbi.putchar('B');
+        sbi.putchar('\n');
         // std.print("{x}\n", .{teste});
         // std.print("&proc_b: {*},  proc_b.sp: {x} \n", .{ &proc_b, proc_b.sp });
         // std.print("&proc_a: {*}, &proc_a.sp: {} \n", .{ &proc_a, @typeName(@typeInfo(proc_a)) });
