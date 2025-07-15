@@ -1,6 +1,11 @@
 #pragma once
 #include "std.h"
 
+// NOTE: São ponteiros definidos no kernel.ld, a convenção é usar char[] por
+// indicar um endereço brutos no linker. Mas é a mesma coisa que char*
+extern uint8_t __bss[], __bss_end[], __stack_top[];
+extern uint8_t __kernel_base[], __free_ram[], __free_ram_end[];
+
 #define PANIC(fmt, ...)                                                        \
   do {                                                                         \
     printf("PANIC: %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__);      \
@@ -63,30 +68,6 @@ struct trap_frame {
 void delay(void);
 
 void handle_trap(struct trap_frame *f);
-
-#define PROCS_MAX 8          // Número máximo de processos
-#define PROC_STACK_SIZE 8192 // Tamanho do stack
-
-#define PROC_UNUSED 0   // Estrutura de controle de processo não usada (?)
-#define PROC_RUNNABLE 1 // Processo rodável
-
-struct process {
-  int pid;    // ID do processo
-  int state;  // Estado do processos: PROC_UNUSED ou PROC_RUNNABLE
-  vaddr_t sp; // Stack Pointer
-  uint32_t *page_table;
-  uint8_t stack[PROC_STACK_SIZE]; // Kernel Stack
-                                  // contém os registradores salvos, o return
-                                  // adress e variáveis locais
-};
-
-extern struct process procs[PROCS_MAX];
-struct process *create_process(uint32_t pc);
-
-extern struct process *current_proc;
-extern struct process *idle_proc;
-
-void yield(void);
 
 // Paging
 #define SATP_SV32 (1u << 31)

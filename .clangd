@@ -5,7 +5,9 @@ CompileFlags:
     "-mabi=ilp32",
     "-ffreestanding",
     "-nostdlib",
-    -DVERSION="" # Só pra ele ficar quieto
+    -DVERSION="", # Só pra ele ficar quieto
+    -I./../inc
   ]
 Diagnostics:
   Suppress: ["bool_redeclaration"]
+
