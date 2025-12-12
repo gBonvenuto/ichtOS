@@ -13,3 +13,5 @@ I've chosen RISC-V because that's the architecture I'm most familiarized from th
 I believe Zig can be a great candidate for programming Linux in the future, given that it's easy to transition to from a C background, it has a big emphasis on compile time operations, it's easy to do unsafe operations and, finally, it has awesome multiplatform build system.
 
 I've already had projects I've worked on with Zig, so I'm familiar with the language. But the build system is not very clear to me yet, so I'll use this opportunity to learn it as well.
+
+Note: I have not finished the project, and have also not finished the transition to the Zig language. It's all scattered in the branches lol. Someday I might come back and redo it all
